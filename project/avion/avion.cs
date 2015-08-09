@@ -5,42 +5,26 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Data;
 using System.Data.SqlClient;
+using System.Data.Linq;
+using System.Data.Linq.Mapping;
+
 
 namespace project
 {
     class avion
     {
-       //ever se la come
-        private string nombre;
-        private int cantAsientos;
 
-        public avion(string nombre,int cantAsientos)
+        public static DataContext dc = new DataContext(myConnection.getConnection());
+        
+        public static IQueryable<tablaAvion> verAvionesCriterio(int criterio)
         {
-            
-            this.nombre = nombre;
-            this.cantAsientos = cantAsientos;
+            //DataContext dc = new DataContext(myConnection.getConnection());
+            var verAvionesCriterio = dc.GetTable<tablaAvion>();
+            var ver = from a in verAvionesCriterio
+                      where a.ID_AVION.Equals(criterio)
+                      select a;
 
-        }
-
-        public int CantAsientos
-        {
-            get { return cantAsientos; }
-            set { cantAsientos = value; }
-        }
-
-        public string Nombre
-        {
-            get { return nombre; }
-            set { nombre = value; }
-        }
-
-        public static SqlDataAdapter verAvionesCriterio(string criterio)
-        {
-            myConnection myConnection = new myConnection();
-            string consulta = String.Format("select * from AVION where NOMBRE_AVION = '{0}' OR ID_AVION = {1}", criterio, Convert.ToInt32(criterio));
-            SqlConnection conexion = myConnection.createConnection();
-            SqlDataAdapter da = new SqlDataAdapter(consulta, conexion);
-            return da;
+            return ver;
         }
 
         public static SqlDataAdapter verAsientos()
@@ -65,32 +49,24 @@ namespace project
 
        
 
-        public static SqlDataAdapter verAviones()
+        public static IQueryable<tablaAvion> verAviones()
         {
-            myConnection myConnection = new myConnection();
-            string consulta = "select * from AVION";
-            SqlConnection conexion = myConnection.createConnection();
-            SqlDataAdapter da = new SqlDataAdapter(consulta, conexion);
-            return da;
+            DataContext dc = new DataContext(myConnection.getConnection());
+            var verAvionesCriterio = dc.GetTable<tablaAvion>();
+            var ver = from a in verAvionesCriterio
+                      select a;
+            return ver;
 
         }
 
-        public static void guardarAvion(avion avion)
+        public static void guardarAvion(int ID_AVION,string NOMBRE_AVION)
         {
-            myConnection myConnection = new myConnection();
-            SqlConnection conexion = myConnection.createConnection();
-            SqlCommand comando = myConnection.createCommand(conexion);
+            DataContext dc = new DataContext(myConnection.getConnection());
+            var table = dc.GetTable<tablaAvion>();
+            tablaAvion nuevo = new tablaAvion { ID_AVION=ID_AVION,NOMBRE_AVION=NOMBRE_AVION,ESTADO="D",ID_VUELO=null};
 
-            
-                comando.CommandText = "PRDB_INGRESA_NUEVO_AVION";
-                comando.CommandType = CommandType.StoredProcedure;
-                comando.Parameters.AddWithValue("@pID_AVION", avion.ultimoAvion());//envia por parametro el ultimo Id aumentado en 1
-                comando.Parameters.AddWithValue("@pNOMBRE_AVION", avion.nombre);//envia por parametro el nombre capturado en el text
-                comando.Parameters.AddWithValue("@pCANT_ASIENTOS", avion.cantAsientos);//envia por parametro la cant de asientos capturado en el text
-              
-                conexion.Open();//abre 
-                comando.ExecuteNonQuery();
-                conexion.Close();
+            table.InsertOnSubmit(nuevo);
+            dc.SubmitChanges();
 
         }
 
@@ -114,24 +90,24 @@ namespace project
 	                }
                 conexion.Close();
 
-
                 return ultimoId;
 
             }
 
             public static void eliminarAvion(int id)
             {
-                myConnection myConnection = new myConnection();
-                SqlConnection conexion = myConnection.createConnection();
-                SqlCommand comando = myConnection.createCommand(conexion);
-                SqlDataReader dr;
+                //DataContext dc = new DataContext(myConnection.getConnection());
+                var elimina = dc.GetTable<tablaAvion>();
+                var aviones = from a in elimina
+                              where a.ID_AVION.Equals(id)
+                              select a;
+                foreach (var item in aviones)
+                {
+                    elimina.DeleteOnSubmit(item);
+                    dc.SubmitChanges();
+                }
+                         
 
-                comando.CommandText = "PRDB_ELIMINAR_AVION";
-                comando.CommandType = CommandType.StoredProcedure;
-                comando.Parameters.AddWithValue("@pid_Avion", id);
-                conexion.Open();
-                comando.ExecuteNonQuery();
-                conexion.Close();
             }
 
             public static void inactivarAsiento(int idAsiento)

@@ -32,8 +32,8 @@ namespace project
                 }
                 else
                 {
-                    avion avion = new avion(txtModelo.Text, Int32.Parse(txtAsientos.Text));
-                    avion.guardarAvion(avion);
+                    
+                    avion.guardarAvion(Int32.Parse(txtAsientos.Text),txtModelo.Text);
                     MessageBox.Show("El avión ha sido ingresado con exito.");
                     this.Close();
                 }  
